@@ -1,0 +1,38 @@
+#!/usr/bin/env perl -w
+# This script currently dumps all files to the PWD. It does not support reproducing
+# directory hierarchies yet.
+use strict;
+my %element;
+my @flat_list;
+
+sub make_file_list {
+  @flat_list = split(/\n/,`mtp-filetree 2>/dev/null | grep -v ^[a-zA-Z]`);
+  for(my $counter = 0; $counter < @flat_list; $counter++) {
+    $element{$counter}{'id'} = $flat_list[$counter];
+    $element{$counter}{'name'} = $flat_list[$counter];
+    $element{$counter}{'id'} =~ s/^ *//;
+    $element{$counter}{'id'} =~ s/ .*$//;
+    $element{$counter}{'name'} =~ s/^ *//;
+    $element{$counter}{'name'} =~ s/^[0-9]* //;
+  }
+}
+
+sub dump_files {
+  for(my $counter = 0; $counter < @flat_list; $counter++) {
+    my $output = `mtp-getfile $element{$counter}{'id'} $element{$counter}{'name'}; echo $?`;
+    my $ret = (split'\n', $output)[-1];
+    chomp $ret;
+    if($ret == 0) {
+      print "File $element{$counter}{'name'} dumped successfully\n";
+    } else {
+      print "File $element{$counter}{'name'} dump failed\n";
+    }
+  }
+}
+
+sub main {
+  make_file_list();
+  dump_files();
+}
+
+main();
